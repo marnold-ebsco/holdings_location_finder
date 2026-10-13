@@ -94,6 +94,24 @@ entry. This is unconfirmed and worth checking in the migration tooling.
 2. Add a `requirements.txt` (`pymarc`).
 3. Add a small unit test for `code_notes` and `collect_former_ids`.
 
+## Model test folder
+
+`working/` in the repo root is a model of the production layout, with sample
+data for testing (iteration_1, the same data as the test result above):
+
+```
+working/migration/iterations/iteration_1/
+  results/folio_holdings_transform_mfhd_holdings.json   (~41 MB)
+  source_data/holdings/holdings_records.mrc             (~15 MB)
+  mapping/locations.tsv                                 (copy of the map)
+```
+
+- It is listed in `.gitignore` (`working/`), so the data is not committed.
+- The model keeps the map at `iterations/<iteration>/mapping/`, but the script
+  still looks in `/working/migration/mapping_files/` (`MAPPING_DIR`). To run
+  against the model, either point `ITERATIONS_DIR` and `MAPPING_DIR` at it or
+  change the script to look in the per-iteration `mapping/` folder.
+
 ## Related files
 
 - `/working/migration/mapping_files/locations.tsv`: the legacy-to-FOLIO map

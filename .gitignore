@@ -1,2 +1,4 @@
 migration_holdings_*.tsv
 __pycache__/
+working/
+holdings_migration_finder.code-workspace
