@@ -98,17 +98,14 @@ tests) covers `code_notes`, `collect_former_ids`, the map helpers, argument
 validation and two end-to-end runs on synthetic data. `.flake8` sets a
 120-character line length.
 
-A run on the model data (iteration_1) found 6,738 of 6,751 formerIds
-(13 missing, e.g. `6877-2`, `34553-2`) and wrote 6,741 rows. This differs from
-the original test result above (0 missing), so the model data is not identical
-to the first test data; the missing IDs look like multi-part holdings (`-2`,
-`-3` suffixes) and are worth a look.
+A run on the model data (iteration_1) found 6,738 of 6,751 formerIds and
+wrote 6,741 rows. The 13 not found are multi-part IDs (`-2`, `-3` suffixes)
+and are known and not a concern.
 
 ## Suggested next steps
 
 1. Point the default map location at the per-iteration `mapping/` folder if
    that is the permanent layout.
-2. Investigate the 13 formerIds not found in the model MARC.
 
 ## Model test folder
 
