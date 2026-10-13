@@ -88,11 +88,27 @@ entry. This is unconfirmed and worth checking in the migration tooling.
   iteration_1 with counts cross-checked (6,751 in = 6,751 found).
 - Dependencies are not pinned in a requirements file.
 
+## Command-line options, tests, requirements (added later)
+
+`argparse` options now exist (see README); the old hardcoded-path and
+interactive-only items above are therefore partly resolved: paths can be
+overridden, and `--out-dir` controls output. `requirements.txt` lists
+`pymarc`, `pytest` and `flake8`. `test_migration_holdings.py` (PyTest, 15
+tests) covers `code_notes`, `collect_former_ids`, the map helpers, argument
+validation and two end-to-end runs on synthetic data. `.flake8` sets a
+120-character line length.
+
+A run on the model data (iteration_1) found 6,738 of 6,751 formerIds
+(13 missing, e.g. `6877-2`, `34553-2`) and wrote 6,741 rows. This differs from
+the original test result above (0 missing), so the model data is not identical
+to the first test data; the missing IDs look like multi-part holdings (`-2`,
+`-3` suffixes) and are worth a look.
+
 ## Suggested next steps
 
-1. Add `argparse` options and an output-dir option.
-2. Add a `requirements.txt` (`pymarc`).
-3. Add a small unit test for `code_notes` and `collect_former_ids`.
+1. Point the default map location at the per-iteration `mapping/` folder if
+   that is the permanent layout.
+2. Investigate the 13 formerIds not found in the model MARC.
 
 ## Model test folder
 
@@ -107,10 +123,9 @@ working/migration/iterations/iteration_1/
 ```
 
 - It is listed in `.gitignore` (`working/`), so the data is not committed.
-- The model keeps the map at `iterations/<iteration>/mapping/`, but the script
+- The model keeps the map at `iterations/<iteration>/mapping/`, but the menu
   still looks in `/working/migration/mapping_files/` (`MAPPING_DIR`). To run
-  against the model, either point `ITERATIONS_DIR` and `MAPPING_DIR` at it or
-  change the script to look in the per-iteration `mapping/` folder.
+  against the model, pass `--mapping` (and `--iterations-dir`).
 
 ## Related files
 

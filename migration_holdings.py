@@ -9,6 +9,7 @@ Steps:
   3. Find the MARC records whose 001 equals one of those values.
   4. Write a TSV: formerId, readable 852, 852$b.
 """
+import argparse
 import csv
 import json
 import re
@@ -143,34 +144,81 @@ def map_status(value, mapping, norm_map):
     return "NOT IN MAP", ""
 
 
-def main():
-    iterations = sorted(p.name for p in ITERATIONS_DIR.iterdir() if p.is_dir())
-    print("Iterations:")
-    iteration = choose("Select iteration", iterations)
-
-    base = ITERATIONS_DIR / iteration
-    results_dir = base / "results"
-    json_files = sorted(
-        p for p in results_dir.glob("*.json") if "holdings" in p.name.lower() and "id_map" not in p.name.lower()
+def parse_args(argv=None):
+    ap = argparse.ArgumentParser(
+        description="Report MARC 852 data for holdings in the Migration location. "
+        "Any option left off is chosen from an interactive menu or prompt."
     )
-    print("\nHoldings transform JSON files:")
-    json_path = choose("Select JSON file", json_files, file_label)
+    ap.add_argument("--iterations-dir", type=Path, default=ITERATIONS_DIR,
+                    help=f"folder of iterations (default {ITERATIONS_DIR})")
+    ap.add_argument("--iteration", help="iteration folder name")
+    ap.add_argument("--json", type=Path, dest="json_path",
+                    help="holdings transform ndjson file (overrides --iteration)")
+    ap.add_argument("--mrc", type=Path, dest="marc_path",
+                    help="MARC holdings file (overrides --iteration)")
+    ap.add_argument("--mapping", type=Path, dest="map_path",
+                    help=f"location mapping TSV (default: menu of {MAPPING_DIR})")
+    ap.add_argument("--no-map", action="store_true",
+                    help="skip the mapping comparison")
+    ap.add_argument("--location-uuid", help="Migration location UUID")
+    ap.add_argument("--out-dir", type=Path, default=Path(__file__).resolve().parent,
+                    help="output folder (default: the script folder)")
+    args = ap.parse_args(argv)
+    if args.map_path and args.no_map:
+        ap.error("--mapping and --no-map cannot be used together")
+    if args.location_uuid:
+        try:
+            args.location_uuid = str(uuid.UUID(args.location_uuid.strip().lower()))
+        except ValueError:
+            ap.error("--location-uuid is not a valid UUID")
+    for name in ("json_path", "marc_path", "map_path"):
+        path = getattr(args, name)
+        if path and not path.is_file():
+            ap.error(f"file not found: {path}")
+    return args
 
-    marc_dir = base / "source_data" / "holdings"
-    marc_files = sorted(
-        p for p in marc_dir.glob("*.mrc") if p.is_file() and p.stat().st_size > 0
-    )
-    print("\nMARC holdings files:")
-    marc_path = choose("Select MARC file", marc_files, file_label)
 
-    map_files = sorted(MAPPING_DIR.glob("*.tsv"))
-    print("\nLocation mapping files:")
-    map_path = choose("Select mapping file", map_files, file_label)
-    mapping = load_map(map_path)
+def main(argv=None):
+    args = parse_args(argv)
+    base = None
+    if not (args.json_path and args.marc_path):
+        iteration = args.iteration
+        if not iteration:
+            iterations = sorted(p.name for p in args.iterations_dir.iterdir() if p.is_dir())
+            print("Iterations:")
+            iteration = choose("Select iteration", iterations)
+        base = args.iterations_dir / iteration
+
+    json_path = args.json_path
+    if not json_path:
+        results_dir = base / "results"
+        json_files = sorted(
+            p for p in results_dir.glob("*.json") if "holdings" in p.name.lower() and "id_map" not in p.name.lower()
+        )
+        print("\nHoldings transform JSON files:")
+        json_path = choose("Select JSON file", json_files, file_label)
+
+    marc_path = args.marc_path
+    if not marc_path:
+        marc_dir = base / "source_data" / "holdings"
+        marc_files = sorted(
+            p for p in marc_dir.glob("*.mrc") if p.is_file() and p.stat().st_size > 0
+        )
+        print("\nMARC holdings files:")
+        marc_path = choose("Select MARC file", marc_files, file_label)
+
+    mapping = {}
+    if not args.no_map:
+        map_path = args.map_path
+        if not map_path:
+            map_files = sorted(MAPPING_DIR.glob("*.tsv"))
+            print("\nLocation mapping files:")
+            map_path = choose("Select mapping file", map_files, file_label)
+        mapping = load_map(map_path)
     norm_map = {norm(k): k for k in mapping}
 
     print()
-    location_id = ask_uuid()
+    location_id = args.location_uuid or ask_uuid()
 
     print(f"\nScanning {json_path.name} ...")
     former_ids, matched, skipped = collect_former_ids(json_path, location_id)
@@ -182,7 +230,8 @@ def main():
     wanted = set(former_ids)
 
     stamp = f"{datetime.now():%Y%m%d-%H%M%S}"
-    out_dir = Path(__file__).resolve().parent
+    out_dir = args.out_dir
+    out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / f"migration_holdings_{stamp}.tsv"
     counts_path = out_dir / f"migration_holdings_{stamp}_852b_counts.tsv"
     b_counts = Counter()
@@ -210,12 +259,18 @@ def main():
                 rows += 1
 
     with open(counts_path, "w", encoding="utf-8") as cf:
-        cf.write("852$b\tcount\tmap_status\tfolio_code\tnote\n")
+        if args.no_map:
+            cf.write("852$b\tcount\tnote\n")
+        else:
+            cf.write("852$b\tcount\tmap_status\tfolio_code\tnote\n")
         for value, n in b_counts.most_common():
+            note = code_notes(value, b_counts)
+            if args.no_map:
+                cf.write(f"{clean(value)}\t{n}\t{note}\n")
+                continue
             status, folio = map_status(value, mapping, norm_map)
             cf.write(
-                f"{clean(value)}\t{n}\t{clean(status)}\t{clean(folio)}"
-                f"\t{code_notes(value, b_counts)}\n"
+                f"{clean(value)}\t{n}\t{clean(status)}\t{clean(folio)}\t{note}\n"
             )
 
     missing = [i for i in former_ids if i not in found]
@@ -229,7 +284,7 @@ def main():
     print("\n852$b counts")
     for value, n in b_counts.most_common():
         note = code_notes(value, b_counts)
-        status, _ = map_status(value, mapping, norm_map)
+        status = "mapped" if args.no_map else map_status(value, mapping, norm_map)[0]
         flag = f"   <-- {note}" if note else ""
         if status != "mapped":
             flag += f"   [{status}]"

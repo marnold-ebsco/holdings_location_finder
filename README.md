@@ -36,6 +36,32 @@ You are prompted for, in order:
 
 Choose from the numbered menus by entering the number. Press Ctrl-C to cancel.
 
+### Command-line options
+
+Every option is optional; anything left off is chosen from the menu or prompt above.
+
+| Option | Purpose |
+|---|---|
+| `--iterations-dir PATH` | Folder of iterations (default `/working/migration/iterations`) |
+| `--iteration NAME` | Iteration folder name |
+| `--json PATH` | Transform ndjson file (overrides `--iteration`) |
+| `--mrc PATH` | MARC holdings file (overrides `--iteration`) |
+| `--mapping PATH` | Location mapping TSV |
+| `--no-map` | Skip the mapping comparison (counts file has only `852$b`, `count`, `note`) |
+| `--location-uuid UUID` | Migration location UUID |
+| `--out-dir PATH` | Output folder (default: the script folder; created if missing) |
+
+With `--json`, `--mrc`, `--location-uuid` and one of `--mapping`/`--no-map`, the
+script runs with no prompts.
+
+### Tests
+
+```
+pip install -r requirements.txt
+python -m pytest
+flake8
+```
+
 ## Output
 
 Written to the same folder as the script, with a shared timestamp:
