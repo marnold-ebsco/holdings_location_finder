@@ -23,6 +23,7 @@ from pathlib import Path
 
 ITERATIONS_DIR = Path("/working/migration/iterations")
 MAPPING_DIRNAME = "mapping_files"  # sibling of the iterations folder
+TSV_SUBDIRS = ("items", "holdings")  # under <iteration>/source_data, in search order
 DEFAULT_ITEM_COL = "RecordNumber(Item)"
 DEFAULT_LOCATION_COL = "Location"
 
@@ -209,12 +210,15 @@ def main(argv=None):
 
     tsv_path = args.tsv_path
     if not tsv_path:
-        tsv_files = sorted(
-            p for p in (base / "source_data" / "holdings").glob("*.tsv")
+        tsv_files = [
+            p for sub in TSV_SUBDIRS
+            for p in sorted((base / "source_data" / sub).glob("*.tsv"))
             if p.stat().st_size > 0
+        ]
+        print("\nSource TSV files (source_data/items first, then holdings):")
+        tsv_path = choose(
+            "Select TSV file", tsv_files, lambda p: f"{p.parent.name}/{file_label(p)}"
         )
-        print("\nSource TSV files:")
-        tsv_path = choose("Select TSV file", tsv_files, file_label)
 
     mapping = {}
     if not args.no_map:

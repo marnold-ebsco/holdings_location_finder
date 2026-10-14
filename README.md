@@ -179,7 +179,7 @@ the standard library, so it needs no `.venv`: `python3 migration_holdings_tsv.py
 |---|---|
 | Iteration | Folders under `/working/migration/iterations/` |
 | JSON file | `*.json` with "holdings" in the name (excluding `*id_map*`) in `iterations/<iteration>/results/`. Pick the `..._csv_holdings.json` file |
-| TSV file | Non-empty `*.tsv` in `iterations/<iteration>/source_data/holdings/` |
+| TSV file | Non-empty `*.tsv` in `iterations/<iteration>/source_data/items/` (listed first) and `.../source_data/holdings/` |
 | Location mapping file | `*.tsv` in `/working/migration/mapping_files/` (sibling of `iterations`; header row, legacy code in column 1, FOLIO code in column 2) |
 | Item ID / location column | Defaults to `RecordNumber(Item)` and `Location` if the header has them, otherwise a menu |
 | Migration location UUID | Typed in; validated. There is **no default**, because it differs per tenant |

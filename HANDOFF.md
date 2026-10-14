@@ -117,6 +117,7 @@ Key facts from the iteration_1 data, which drive the design:
   have several item rows with different locations, so a bib match would pull
   in rows that are not in the Migration holdings. Bib + location matching was
   considered and rejected.
+- The TSV menu lists `*.tsv` from `source_data/items/` first, then `source_data/holdings/` (`TSV_SUBDIRS`). Production data is expected under `items/`; the local model has it under `holdings/`.
 - A holdings record can cover several bibs. The TSV bib cell is then `b1;b2`
   and the extra bib IDs are also in `formerIds`. They are not item IDs, so the
   script does not report them as missing.
