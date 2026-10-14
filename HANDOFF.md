@@ -144,6 +144,12 @@ no "multiple $b" note).
   (`<iterations-dir>/../mapping_files`), for both scripts. It follows
   `--iterations-dir` rather than a fixed path. The model data was moved to
   match, and `MAPPING_DIR` became `MAPPING_DIRNAME`.
+- `install_ec2.sh` installs on an Ubuntu EC2 instance: checks that Python 3.12+ and
+  git exist (it installs nothing), creates `/working/migration/scripts` if
+  missing, puts the repo in `/working/migration/scripts/holdings_migration_finder`
+  (cloning if run from elsewhere), then runs `setup.sh`. It assumes
+  `iterations/` and `mapping_files/` already exist. It has NOT been run on a
+  real EC2 instance, only syntax-checked; test it there before relying on it.
 - Output stays in the script folder by default for both scripts
   (`--out-dir` overrides).
 

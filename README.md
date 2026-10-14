@@ -37,6 +37,46 @@ The first part of this README covers the MARC script. See
 This creates `.venv` and installs `requirements.txt` (needs Python 3.12+).
 `migration_holdings_tsv.py` uses only the standard library and needs no setup.
 
+### Installing on an EC2 instance (Ubuntu)
+
+Assumes Python 3.12+ and git are already installed, and that
+`/working/migration/iterations` and `/working/migration/mapping_files` already
+exist. The installer checks for Python and git but does not install them.
+
+1. Clone the repo anywhere (for example your home folder) and run the installer:
+   ```
+   git clone https://github.com/marnold-ebsco/holdings_location_finder.git
+   cd holdings_location_finder
+   ./install_ec2.sh
+   ```
+   If the repo is private, clone with a GitHub token or deploy key, or copy the
+   folder up with `scp` instead.
+2. The installer creates `/working/migration/scripts` if it is missing, places
+   the code in `/working/migration/scripts/holdings_migration_finder` (cloning
+   it there when you ran it from somewhere else), and runs `setup.sh` to build
+   `.venv`. You can delete the first clone afterwards.
+3. Run the tools from the install folder (see *Usage* for the prompts). The
+   iterations and mapping files are read from the existing folders:
+   ```
+   cd /working/migration/scripts/holdings_migration_finder
+   .venv/bin/python migration_holdings.py        # MARC
+   python3 migration_holdings_tsv.py             # TSV
+   ```
+   Outputs go in the install folder unless you pass `--out-dir`.
+
+If the repo is already in `/working/migration/scripts/` (any folder name), the
+installer uses it in place and does not clone again:
+
+```
+cd /working/migration/scripts/holdings_migration_finder
+git pull                # optional, to get the latest code
+./install_ec2.sh
+```
+
+If Python 3.12 is installed under another name, run
+`PYTHON=/path/to/python3.12 ./install_ec2.sh`. The installer needs outbound
+internet access for `git clone` and the `pip install`.
+
 ## Usage
 
 ```
@@ -189,4 +229,5 @@ missing, and the location counts.
 - `migration_holdings_tsv.py`: the TSV tool
 - `test_migration_holdings.py`, `test_migration_holdings_tsv.py`: PyTest tests
 - `setup.sh`: creates `.venv` and installs `requirements.txt`
+- `install_ec2.sh`: Ubuntu EC2 installer; checks Python and git, installs into `/working/migration/scripts/`, runs `setup.sh`
 - `HANDOFF.md`: design notes, assumptions and open items for the next owner
