@@ -154,9 +154,10 @@ no "multiple $b" note).
   `/working/migration/scripts/holdings_migration_finder` and built `.venv`.
   Note that `/working/migration/scripts/holdings_migration_finder` there was
   first a clone of `FOLIO-FSE/migration_wts`, not this repo, so the code had to
-  be cloned fresh over it (the old folder was renamed). The TSV script's menus
-  were then confirmed to read `iterations/` on that machine; the TSV folder
-  search was changed to `source_data/items/` first after that run.
+  be cloned fresh over it (the old folder was renamed). The TSV script's iteration
+  and JSON menus worked on first run, but no TSV was found in
+  `source_data/holdings/`, so the search was changed to `source_data/items/`
+  first. A later EC2 run with that change completed with no problems.
 - Output stays in the script folder by default for both scripts
   (`--out-dir` overrides).
 
