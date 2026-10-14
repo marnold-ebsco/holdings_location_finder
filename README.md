@@ -1,9 +1,19 @@
 # migration_holdings
 
-Interactive tool that finds holdings records that landed in the FOLIO
-"Migration" location, and reports the original MARC 852 data for them. Use it
-to see which source location codes (852$b) did not map, so the location map can
-be fixed.
+Interactive tools that find holdings records that landed in the FOLIO
+"Migration" location, and report the original source location data for them.
+Use them to see which source location codes did not map, so the location map
+can be fixed.
+
+There are two scripts, depending on what the holdings were migrated from:
+
+| Script | Source data | Location value reported |
+|---|---|---|
+| `migration_holdings.py` | MARC holdings (`.mrc`) | 852$b |
+| `migration_holdings_tsv.py` | Source TSV (items) | a chosen column, default `Location` |
+
+The first part of this README covers the MARC script. See
+[TSV version](#tsv-version-migration_holdings_tsvpy) for the other.
 
 ## What it does
 
@@ -15,13 +25,22 @@ be fixed.
 
 ## Requirements
 
-- Python 3.9+ (developed on 3.14)
+- Python 3.12+
 - `pymarc` (developed on 5.4.0): `pip install pymarc`
+
+## Setup
+
+```
+./setup.sh
+```
+
+This creates `.venv` and installs `requirements.txt` (needs Python 3.12+).
+`migration_holdings_tsv.py` uses only the standard library and needs no setup.
 
 ## Usage
 
 ```
-python3 migration_holdings.py
+.venv/bin/python migration_holdings.py
 ```
 
 You are prompted for, in order:
@@ -31,7 +50,7 @@ You are prompted for, in order:
 | Iteration | Folders under `/working/migration/iterations/` |
 | JSON file | `*.json` files with "holdings" in the name (excluding `*id_map*`) in `iterations/<iteration>/results/` |
 | MARC file | Non-empty `*.mrc` files in `iterations/<iteration>/source_data/holdings/` |
-| Location mapping file | `*.tsv` files in `/working/migration/mapping_files/` (needs `legacy_code` and `folio_code` columns, header row first) |
+| Location mapping file | `*.tsv` files in `mapping_files/`, a sibling of the iterations folder, e.g. `/working/migration/mapping_files/` (needs `legacy_code` and `folio_code` columns, header row first) |
 | Migration location UUID | Typed in; validated as a UUID |
 
 Choose from the numbered menus by entering the number. Press Ctrl-C to cancel.
@@ -99,7 +118,75 @@ that differ only by case or whitespace (the other variant is named). Example:
   reason.
 - Counts are per 852 field. Normally this equals per record.
 
+## TSV version (`migration_holdings_tsv.py`)
+
+Use this when the holdings were built from a TSV rather than MARC. It uses only
+the standard library, so it needs no `.venv`: `python3 migration_holdings_tsv.py`.
+
+### What it does
+
+1. Reads the `folio_holdings_transform` ndjson file and collects
+   `formerIds[1:]` (the item IDs) from every record whose `permanentLocationId`
+   equals the Migration UUID. In the TSV transform, `formerIds[0]` is the bib
+   ID and the rest are item IDs.
+2. Reads the source TSV and keeps each row whose item-ID column equals one of
+   those IDs (exact match, whitespace stripped).
+3. Writes the matching rows and a count of the raw location values.
+
+### Prompts
+
+| Prompt | Source |
+|---|---|
+| Iteration | Folders under `/working/migration/iterations/` |
+| JSON file | `*.json` with "holdings" in the name (excluding `*id_map*`) in `iterations/<iteration>/results/`. Pick the `..._csv_holdings.json` file |
+| TSV file | Non-empty `*.tsv` in `iterations/<iteration>/source_data/holdings/` |
+| Location mapping file | `*.tsv` in `/working/migration/mapping_files/` (sibling of `iterations`; header row, legacy code in column 1, FOLIO code in column 2) |
+| Item ID / location column | Defaults to `RecordNumber(Item)` and `Location` if the header has them, otherwise a menu |
+| Migration location UUID | Typed in; validated. There is **no default**, because it differs per tenant |
+
+### Command-line options
+
+| Option | Purpose |
+|---|---|
+| `--iterations-dir PATH`, `--iteration NAME` | As for the MARC script |
+| `--json PATH`, `--tsv PATH` | Input files (override `--iteration`) |
+| `--item-col NAME`, `--location-col NAME` | TSV column names |
+| `--mapping PATH` / `--no-map` | Mapping file, or skip the comparison |
+| `--location-uuid UUID` | Migration location UUID |
+| `--out-dir PATH` | Output folder (default: the script folder) |
+
+### Output
+
+Written to the script folder with a shared timestamp:
+
+- `migration_holdings_tsv_<timestamp>.tsv`: one row per matched TSV (item)
+  row, with all the original columns plus a `note` column (same checks as the
+  MARC `note` column).
+- `migration_holdings_tsv_<timestamp>_location_counts.tsv`: each raw location
+  value with `count` (item rows), `map_status`, `folio_code` and `note`.
+
+The terminal summary shows holdings found, item IDs searched, found and
+missing, and the location counts.
+
+### Behaviour to know about
+
+- Matching is on item ID only, not bib ID or bib + location.
+- A holdings record covering several bibs has a TSV bib cell like `b1;b2`, and
+  its extra bib IDs also appear in `formerIds`. Those are not reported as
+  missing items.
+- Records with no item IDs in `formerIds` are skipped and counted.
+- The counts are per item row, so they can exceed the number of holdings.
+
+### Tests
+
+```
+.venv/bin/python -m pytest test_migration_holdings_tsv.py
+```
+
 ## Files
 
-- `migration_holdings.py`: the tool
+- `migration_holdings.py`: the MARC tool
+- `migration_holdings_tsv.py`: the TSV tool
+- `test_migration_holdings.py`, `test_migration_holdings_tsv.py`: PyTest tests
+- `setup.sh`: creates `.venv` and installs `requirements.txt`
 - `HANDOFF.md`: design notes, assumptions and open items for the next owner

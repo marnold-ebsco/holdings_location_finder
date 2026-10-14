@@ -19,10 +19,14 @@ from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
-from pymarc import MARCReader
+try:
+    from pymarc import MARCReader
+except ImportError:
+    sys.exit("pymarc is not installed. Run ./setup.sh, then use .venv/bin/python "
+             "(or: pip install -r requirements.txt).")
 
 ITERATIONS_DIR = Path("/working/migration/iterations")
-MAPPING_DIR = Path("/working/migration/mapping_files")
+MAPPING_DIRNAME = "mapping_files"  # sibling of the iterations folder
 
 
 def choose(prompt, options, label=str):
@@ -157,7 +161,7 @@ def parse_args(argv=None):
     ap.add_argument("--mrc", type=Path, dest="marc_path",
                     help="MARC holdings file (overrides --iteration)")
     ap.add_argument("--mapping", type=Path, dest="map_path",
-                    help=f"location mapping TSV (default: menu of {MAPPING_DIR})")
+                    help=f"location mapping TSV (default: menu of <iterations-dir>/../{MAPPING_DIRNAME})")
     ap.add_argument("--no-map", action="store_true",
                     help="skip the mapping comparison")
     ap.add_argument("--location-uuid", help="Migration location UUID")
@@ -211,7 +215,7 @@ def main(argv=None):
     if not args.no_map:
         map_path = args.map_path
         if not map_path:
-            map_files = sorted(MAPPING_DIR.glob("*.tsv"))
+            map_files = sorted((args.iterations_dir.parent / MAPPING_DIRNAME).glob("*.tsv"))
             print("\nLocation mapping files:")
             map_path = choose("Select mapping file", map_files, file_label)
         mapping = load_map(map_path)

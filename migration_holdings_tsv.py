@@ -22,6 +22,7 @@ from datetime import datetime
 from pathlib import Path
 
 ITERATIONS_DIR = Path("/working/migration/iterations")
+MAPPING_DIRNAME = "mapping_files"  # sibling of the iterations folder
 DEFAULT_ITEM_COL = "RecordNumber(Item)"
 DEFAULT_LOCATION_COL = "Location"
 
@@ -163,7 +164,7 @@ def parse_args(argv=None):
     ap.add_argument("--location-col",
                     help=f"location column (default {DEFAULT_LOCATION_COL})")
     ap.add_argument("--mapping", type=Path, dest="map_path",
-                    help="location mapping TSV (default: menu of <iteration>/mapping)")
+                    help="location mapping TSV (default: menu of <iterations-dir>/../mapping_files)")
     ap.add_argument("--no-map", action="store_true",
                     help="skip the mapping comparison")
     ap.add_argument("--location-uuid",
@@ -219,7 +220,7 @@ def main(argv=None):
     if not args.no_map:
         map_path = args.map_path
         if not map_path:
-            map_files = sorted((base / "mapping").glob("*.tsv"))
+            map_files = sorted((args.iterations_dir.parent / MAPPING_DIRNAME).glob("*.tsv"))
             print("\nLocation mapping files:")
             map_path = choose("Select mapping file", map_files, file_label)
         mapping = load_map(map_path)
