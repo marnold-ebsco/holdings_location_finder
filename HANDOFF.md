@@ -149,8 +149,14 @@ no "multiple $b" note).
   git exist (it installs nothing), creates `/working/migration/scripts` if
   missing, puts the repo in `/working/migration/scripts/holdings_migration_finder`
   (cloning if run from elsewhere), then runs `setup.sh`. It assumes
-  `iterations/` and `mapping_files/` already exist. It has NOT been run on a
-  real EC2 instance, only syntax-checked; test it there before relying on it.
+  `iterations/` and `mapping_files/` already exist. Tested on a real Ubuntu EC2
+  instance (2026-10-14): it ran in place from
+  `/working/migration/scripts/holdings_migration_finder` and built `.venv`.
+  Note that `/working/migration/scripts/holdings_migration_finder` there was
+  first a clone of `FOLIO-FSE/migration_wts`, not this repo, so the code had to
+  be cloned fresh over it (the old folder was renamed). The TSV script's menus
+  were then confirmed to read `iterations/` on that machine; the TSV folder
+  search was changed to `source_data/items/` first after that run.
 - Output stays in the script folder by default for both scripts
   (`--out-dir` overrides).
 
