@@ -28,7 +28,6 @@ ITERATIONS_DIR = Path("/working/migration/iterations")
 MAPPING_DIRNAME = "mapping_files"  # sibling of the iterations folder
 TSV_SUBDIR = "items"  # under <iteration>/source_data
 DEFAULT_ITEM_COL = "itemId"
-DEFAULT_TYPE_COL = "material_type"
 
 
 def choose(prompt, options, label=str):
@@ -166,7 +165,7 @@ def parse_args(argv=None):
                     help="source TSV file (overrides --iteration)")
     ap.add_argument("--item-col", help=f"item ID column (default {DEFAULT_ITEM_COL})")
     ap.add_argument("--type-col",
-                    help=f"material type column (default {DEFAULT_TYPE_COL})")
+                    help="material type column (default: choose from a menu of the TSV header)")
     ap.add_argument("--mapping", type=Path, dest="map_path",
                     help="material type mapping TSV (default: menu of <iterations-dir>/../mapping_files)")
     ap.add_argument("--no-map", action="store_true",
@@ -233,7 +232,7 @@ def main(argv=None):
     with open(tsv_path, encoding="utf-8", newline="") as fh:
         header = next(csv.reader(fh, delimiter="\t"), [])
     item_col = pick_column("Item ID column:", header, DEFAULT_ITEM_COL, args.item_col)
-    type_col = pick_column("Material type column:", header, DEFAULT_TYPE_COL, args.type_col)
+    type_col = pick_column("Material type column:", header, None, args.type_col)
     bib_col = header[0]
 
     print()
