@@ -161,6 +161,32 @@ no "multiple $b" note).
 - Output stays in the script folder by default for both scripts
   (`--out-dir` overrides).
 
+## Material type version (`migration_mattypes.py`, added 2026-10-19)
+
+Items counterpart of the TSV script, for correcting the material-type map.
+Copy of `migration_holdings_tsv.py` with these differences:
+
+- Reads the item transform JSON (`results/*item*.json`, not `id_map`) and keeps
+  records whose `materialTypeId` equals the entered Migration material type UUID.
+- Item IDs are `formerIds[1:]`; `formerIds[0]` is the holdings key.
+  In the NSCC data the TSV `itemId` column (holdings key + barcode) matches
+  `formerIds[1]`, so `DEFAULT_ITEM_COL = "itemId"`. The first attempt used
+  `RecordNumber(Item)` and found 0 of 1,889 IDs.
+- Source TSV comes only from `source_data/items/`.
+- The material type column is always chosen from a menu of the TSV header
+  (column names vary by tenant); `--type-col` skips the menu. Options mirror the
+  TSV script (`--item-col`, `--mapping`, `--no-map`, `--type-uuid`, `--out-dir`).
+- Outputs: `migration_mattypes_<stamp>.tsv` and
+  `migration_mattypes_<stamp>_type_counts.tsv`.
+- Stdlib only, no `.venv` needed: `python3 migration_mattypes.py`.
+- Tested with synthetic data only; the EC2 run after the `itemId` fix is
+  unconfirmed. No unit tests yet (`test_migration_mattypes.py` would be the next step).
+- EC2 note: `/working/migration/scripts/holdings_migration_finder` there is not
+  its own git repo (its parent is the `FOLIO-FSE/migration_nscc` clone), so
+  `git pull` does not work. Update by cloning
+  `ssh://git@ssh.github.com:443/marnold-ebsco/holdings_location_finder.git` to
+  `/tmp/hlf` (or `git pull` there) and copying changed files over.
+
 ## Suggested next steps
 
 1. Decide whether to share the helpers between the two scripts.
