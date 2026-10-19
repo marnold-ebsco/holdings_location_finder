@@ -9,7 +9,7 @@ Steps:
   1. Pick an iteration, a folio_item_transform ndjson file, a source TSV
      (from source_data/items) and enter the Migration material type UUID
      (no default; it varies by tenant).
-  2. Collect the formerIds (item IDs) from every JSON record whose
+  2. Collect formerIds[1:] (the item IDs; formerIds[0] is the holdings key) from every JSON record whose
      materialTypeId equals the UUID.
   3. Find the TSV rows whose item-ID column equals one of those values.
   4. Write the matching rows, plus counts of the raw material-type values.
@@ -27,8 +27,8 @@ from pathlib import Path
 ITERATIONS_DIR = Path("/working/migration/iterations")
 MAPPING_DIRNAME = "mapping_files"  # sibling of the iterations folder
 TSV_SUBDIR = "items"  # under <iteration>/source_data
-DEFAULT_ITEM_COL = "RecordNumber(Item)"
-DEFAULT_TYPE_COL = "Material Type"
+DEFAULT_ITEM_COL = "itemId"
+DEFAULT_TYPE_COL = "material_type"
 
 
 def choose(prompt, options, label=str):
@@ -128,7 +128,7 @@ def collect_item_ids(json_path, type_id):
             if rec.get("materialTypeId") != type_id:
                 continue
             matched += 1
-            items = [str(v).strip() for v in (rec.get("formerIds") or [])]
+            items = [str(v).strip() for v in (rec.get("formerIds") or [])[1:]]
             items = [v for v in items if v]
             if not items:
                 no_items += 1
